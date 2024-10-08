@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>MY48 Matching Card</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Quicksand:wght@300..700&display=swap"
+      rel="stylesheet"
+    />
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            aspectRatio: {
+              "5/6": "5 / 6",
+            },
+          },
+        },
+      };
+    </script>
+    <style>
+      body {
+        font-family: "Quicksand", system-ui;
+        font-optical-sizing: auto;
+        font-weight: 600;
+        font-style: normal;
+      }
+      .card-inner {
+        transition: transform 0.2s;
+        transform-style: preserve-3d;
+      }
+      .card.flipped .card-inner {
+        transform: rotateY(180deg);
+      }
+      .card-front,
+      .card-back {
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        -webkit-backface-visibility: hidden;
+        backface-visibility: hidden;
+      }
+      .card-back {
+        transform: rotateY(180deg);
+      }
+    </style>
+  </head>
+  <body
+    class="flex flex-col items-center bg-gray-100 m-0 p-5 box-border text-gray-800"
+  >
+    <h1 class="text-2xl font-bold mb-2">MY48 Matching Card</h1>
+
+    <div class="mb-4 text-sm">
+      Created with ❤️ by
+      <a href="https://x.com/hakimu_my" class="text-green-700 underline"
+        >@hakimu_my</a
+      >
+    </div>
+
+    <div
+      class="flex flex-col w-full border-2 border-green-700 rounded-xl bg-white max-w-7xl overflow-hidden"
+    >
+      <div
+        id="menuStats"
+        class="flex justify-around gap-2 w-full bg-green-700 p-2 font-mono sm:text-xl text-white sm:font-bold"
+      >
+        <div id="flips">Flips: 0</div>
+        <div class="border-x border-white"></div>
+        <div id="timer">Time: 0.00s</div>
+        <div class="border-x border-white"></div>
+        <div id="points">Points: 0</div>
+      </div>
+      <div
+        id="menuGame"
+        class="flex flex-col sm:flex-row gap-2 p-2 justify-between w-full"
+      >
+
+          <select
+            id="cardCount"
+            class="text-lg py-2 px-4 border-2 border-green-700 rounded-lg"
+          >
+            <option value="4">4 cards</option>
+            <option value="12">12 cards</option>
+            <option value="20">20 cards</option>
+            <option value="26">26 cards</option>
+          </select>
+
+        <button
+          id="startGame"
+          class="text-lg py-2 px-4 cursor-pointer bg-green-700 text-white border-none rounded-lg hover:bg-green-800 uppercase"
+        >
+          Start Game
+        </button>
+        <button
+          id="disclaimer"
+          class="text-lg sm:py-2 px-4 gap-2 border-2 border-white text-amber-600 rounded-lg flex items-center justify-center"
+          onclick="disclaimer()"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            viewbox="0 0 512 512"
+            class="h-4 fill-amber-600"
+          >
+            <path
+              d="M504 256c0 137-111 248-248 248S8 393 8 256C8 119.1 119 8 256 8s248 111.1 248 248zm-248 50c-25.4 0-46 20.6-46 46s20.6 46 46 46 46-20.6 46-46-20.6-46-46-46zm-43.7-165.3l7.4 136c.3 6.4 5.6 11.3 12 11.3h48.5c6.4 0 11.6-5 12-11.3l7.4-136c.4-6.9-5.1-12.7-12-12.7h-63.4c-6.9 0-12.4 5.8-12 12.7z"
+            />
+          </svg>
+          Disclaimer
+        </button>
+      </div>
+    </div>
+
+    <div
+      class="game-container grid grid-cols-4 md:grid-cols-6 gap-2 mt-8 w-full max-w-4xl"
+      id="gameContainer"
+    ></div>
+
+    <script>
+      const gameContainer = document.getElementById("gameContainer");
+      const flipsElement = document.getElementById("flips");
+      const timerElement = document.getElementById("timer");
+      const pointsElement = document.getElementById("points");
+      const startGameButton = document.getElementById("startGame");
+      const cardCountSelect = document.getElementById("cardCount");
+      let cards = [];
+      let flippedCards = [];
+      let totalFlips = 0;
+      let startTime;
+      let elapsedTime = 0;
+      let points = 0;
+      let timerInterval;
+      let idolData = [
+        {"name": "Cocoa", "url": " ./images/e_cocoa.png"},
+        {"name": "Yishyan", "url": " ./images/e_yishyan.png"},
+        {"name": "Yurina", "url": " ./images/e_yurina.png"},
+        {"name": "Suzuha", "url": " ./images/e_suzuha.png"},
+        {"name": "Haruka", "url": " ./images/e_haruka.png"},
+        {"name": "Devi", "url": " ./images/e_devi.png"},
+        {"name": "Lucine", "url": " ./images/e_lucine.png"},
+        {"name": "Amanda", "url": " ./images/e_amanda.png"},
+        {"name": "Salwa", "url": " ./images/e_salwa.png"},
+        {"name": "Khalies", "url": " ./images/e_khalies.png"},
+        {"name": "Hillary", "url": " ./images/e_hillary.png"},
+        {"name": "Andrea", "url": " ./images/e_andrea.png"},
+        {"name": "Tiffany", "url": " ./images/e_tiffany.png"}
+      ];
+
+      startGameButton.addEventListener("click", startGame);
+      window.addEventListener("resize", adjustCardSize);
+
+      function startGame() {
+        const selectedCardCount = cardCountSelect.value;
+        gameContainer.innerHTML = "";
+        cards = [];
+        flippedCards = [];
+        totalFlips = 0;
+        elapsedTime = 0;
+        points = 0;
+        updateFlips();
+        updateTimer();
+        updatePoints();
+        createCards(parseInt(selectedCardCount));
+        adjustCardSize();
+        showCardBacksBriefly();
+        window.location.href = "./#gameContainer";
+      }
+      
+      function showCardBacksBriefly() {
+        cards.forEach(card => card.classList.add('flipped'));
+        
+        setTimeout(() => {
+          cards.forEach(card => card.classList.remove('flipped'));
+          startTimer();
+        }, 1000);
+      }
+
+      function startTimer() {
+        clearInterval(timerInterval);
+        startTime = Date.now();
+        timerInterval = setInterval(() => {
+          elapsedTime = Date.now() - startTime;
+          updateTimer();
+        }, 10);
+      }
+
+      function updateTimer() {
+        const seconds = (elapsedTime / 1000).toFixed(2);
+        timerElement.textContent = `Time: ${seconds}s`;
+      }
+
+      function createCards(cardCount) {
+        let shuffledIdols = idolData.sort(() => Math.random() - 0.5).slice(0, cardCount / 2);
+        let cardData = [];
+        
+        shuffledIdols.forEach(idol => {
+          cardData.push({ type: 'name', content: idol.name });
+          cardData.push({ type: 'image', content: idol.url });
+        });
+        
+        cardData.sort(() => Math.random() - 0.5);
+
+        // const columns = getOptimalColumns(cardCount);
+        // gameContainer.style.gridTemplateColumns = `repeat(${columns}, minmax(0, 1fr))`;
+
+        for (let i = 0; i < cardCount; i++) {
+          const card = document.createElement("div");
+          card.classList.add(
+            "card",
+            "aspect-square",
+            "bg-green-700",
+            "flex",
+            "justify-center",
+            "items-center",
+            "cursor-pointer",
+            "transition-transform",
+            "duration-300",
+            "rounded-xl",
+            "hover:scale-105"
+          );
+
+          const cardInnerClasses = cardData[i].type === 'image' ? "p-4 sm:p-4 md:p-4 lg:p-4" : "";
+          const cardContent = cardData[i].type === 'image' 
+            ? `<img src="${cardData[i].content}" alt="Idol" class="w-full h-full object-contain rounded-xl">`
+            : `<div class="text-xl sm:text-2xl md:text-2xl font-bold">${cardData[i].content}</div>`;
+
+          card.innerHTML = `
+            <div class="card-inner relative w-full h-full text-center">
+              <div class="card-front absolute w-full h-full bg-green-700 rounded-xl text-xs sm:text-xl items-center justify-center flex flex-col text-white p-2">
+                  <img src=" ./images/msiatrulyasia.png" />
+              </div>
+              <div class="card-back absolute w-full h-full bg-green-600 rounded-xl ${cardInnerClasses} flex items-center justify-center text-white m">
+                ${cardContent}
+              </div>
+            </div>
+          `;
+          card.dataset.content = cardData[i].content;
+          card.dataset.type = cardData[i].type;
+          card.addEventListener("click", flipCard);
+          gameContainer.appendChild(card);
+          cards.push(card);
+        }
+      }
+
+      function getOptimalColumns(cardCount) {
+        const optimalGrids = {
+          4: 4,
+          12: 4,
+          20: 4,
+          26: 4,
+        };
+        return optimalGrids[cardCount] || Math.ceil(Math.sqrt(cardCount));
+      }
+
+      function adjustCardSize() {
+        // Tailwind handles responsiveness, so we don't need to manually adjust card size
+      }
+
+      function flipCard() {
+        if (flippedCards.length < 2 && !this.classList.contains("flipped")) {
+          this.classList.add("flipped");
+          flippedCards.push(this);
+          totalFlips++;
+          updateFlips();
+
+          if (flippedCards.length === 2) {
+            setTimeout(checkMatch, 500);
+          }
+        }
+      }
+
+      function checkMatch() {
+        const [card1, card2] = flippedCards;
+        if (card1.dataset.type !== card2.dataset.type) {
+          const idol1 = idolData.find(idol => idol.name === card1.dataset.content || idol.url === card1.dataset.content);
+          const idol2 = idolData.find(idol => idol.name === card2.dataset.content || idol.url === card2.dataset.content);
+          
+          if (idol1 === idol2) {
+            card1.classList.add("invisible");
+            card2.classList.add("invisible");
+            checkWin();
+          } else {
+            card1.classList.remove("flipped");
+            card2.classList.remove("flipped");
+          }
+        } else {
+          card1.classList.remove("flipped");
+          card2.classList.remove("flipped");
+        }
+        flippedCards = [];
+      }
+
+      function updateFlips() {
+        flipsElement.textContent = `Flips: ${totalFlips}`;
+      }
+
+      function updatePoints() {
+        pointsElement.textContent = `Points: ${Math.round(points)}`;
+      }
+
+      function checkWin() {
+        if (cards.every((card) => card.classList.contains("invisible"))) {
+          clearInterval(timerInterval);
+          calculatePoints();
+          Swal.fire({
+            title: "Finished!",
+            html: `
+              <p>You've won!</p>
+              <p>Time: ${(elapsedTime / 1000).toFixed(2)} seconds</p>
+              <p>Total flips: ${totalFlips}</p>
+              <p>Points: ${Math.round(points)}</p>
+            `,
+            icon: "success",
+            confirmButtonText: "Play Again",
+            confirmButtonColor: "#15803d", // Tailwind's green-700
+          }).then((result) => {
+            if (result.isConfirmed) {
+              startGame();
+            }
+          });
+        }
+      }
+
+      function disclaimer() {
+        Swal.fire({
+          title: "Disclaimer!",
+          html: `
+              <p style="text-align:left; margin-bottom:.5rem;">This program is a fan-created project made for entertainment purposes only. It is not affiliated with, endorsed by, or connected to the owners of the original intellectual property.</p>
+              <p style="text-align:left; margin-bottom:.5rem;">All trademarks, copyrights, and other rights are the property of their respective owners. No copyright infringement is intended.</p>
+              <p style="text-align:left; margin-bottom:.5rem;">This is a non-profit fan project created out of love and appreciation for the original work. We do not claim ownership of any copyrighted materials used.</p>
+              <p style="text-align:left; margin-bottom:.5rem;">If you are the copyright owner and have concerns about the use of your intellectual property, please contact us, and we will address the issue promptly.</p>
+            `,
+          icon: "warning",
+          confirmButtonColor: "#15803d",
+        });
+      }
+
+      function calculatePoints() {
+        const cardCount = cards.length;
+        const Max_F = cardCount * 2; // Maximum possible flips (worst case)
+        const Max_T = 300000; // Maximum time in milliseconds (5 minutes)
+        const C_F = 0.7; // Weight for flips (70%)
+        const C_T = 0.3; // Weight for time (30%)
+
+        points = calculateScore(
+          totalFlips,
+          elapsedTime,
+          Max_F,
+          Max_T,
+          C_F,
+          C_T
+        );
+        updatePoints();
+      }
+
+      function calculateScore(F, T, Max_F, Max_T, C_F, C_T) {
+        // Ensure that the weight factors sum to 1
+        if (C_F + C_T !== 1) {
+          throw new Error("C_F and C_T must sum to 1");
+        }
+
+        // Calculate the flip and time components
+        let flipComponent = 1 - F / Max_F;
+        let timeComponent = 1 - T / Max_T;
+
+        // Calculate the final score
+        let score = 1000 * (C_F * flipComponent + C_T * timeComponent);
+
+        return score;
+      }
+    </script>
+  </body>
+</html>
